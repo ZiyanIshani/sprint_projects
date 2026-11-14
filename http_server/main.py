@@ -17,6 +17,7 @@ def parse_request(request):
             continue
         name,_,value = i.partition(":")
         head_json[name.strip()] = value.strip()
+    
     return head_json, body
 
     
@@ -38,37 +39,51 @@ while True:
     req = info.decode()
     head_req, body_req = parse_request(req)
     print(head_req)
-    length = 0
-    for k,v in head_req.items():
-        if k.lower() == "content-length":
-            length = int(v)
-    body_bytes = body_req.encode()
-    while len(body_bytes) < length:
-        chunk = conn.recv(min(4096,length-len(body_bytes)))
-        if not chunk:
-            break
-        body_bytes += chunk
-    body_req = body_bytes.decode()
-
-
     now = datetime.now(timezone.utc)
     http_date = format_datetime(now, usegmt=True)
-    body = json.dumps({"message":f"You said {body_req}"})
-    body_len = len(body.encode())
-    http_resp = "\r\n".join([
-        "HTTP/1.1 200 OK",
-        "Server: localhost",
-        f"Date: {http_date}",
-        "Content-Type: application/json",
-        f"Content-Length: {body_len}",
-        "",
-        body,
-    ])
-         
-    encoded_resp = http_resp.encode()
-    #print(encoded_resp)
-    conn.sendall(encoded_resp)
-    conn.close()
+    try:
+        length = 0
+        for k,v in head_req.items():
+            if k.lower() == "content-length":
+                length = int(v)
+        body_bytes = body_req.encode()
+        while len(body_bytes) < length:
+            chunk = conn.recv(min(4096,length-len(body_bytes)))
+            if not chunk:
+                break
+            body_bytes += chunk
+        body_req = body_bytes.decode()
+
+
+        
+        body = json.dumps({"message":f"You said {body_req}"})
+        body_len = len(body.encode())
+        http_resp = "\r\n".join([
+            "HTTP/1.1 200 OK",
+            "Server: localhost",
+            f"Date: {http_date}",
+            "Content-Type: application/json",
+            f"Content-Length: {body_len}",
+            "",
+            body,
+        ])
+            
+
+    except ValueError:
+        http_resp = "\r\n".join([
+                    "HTTP/1.1 400 Bad Request",
+                    "Server: localhost",
+                    f"Date: {http_date}",
+                    "Content-Type: application/json",
+                    f"Content-Length: 0",
+                    "",
+                    "",
+                ])
+
+    finally: 
+        encoded_resp = http_resp.encode()
+        conn.sendall(encoded_resp)
+        conn.close()
 
 
 

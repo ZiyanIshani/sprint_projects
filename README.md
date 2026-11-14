@@ -16,7 +16,6 @@ AI coding tools can write most of this code for me. My goal is to understand wha
 4. **AI as a reviewer, not an author.** I can ask conceptual questions or for a hint. After I finish a piece, I can paste it in for critique.
 5. **Stuck rule.** If I'm stuck on the same thing for a full sprint, I ask for a hint: a nudge, not the answer.
 6. **Primary sources first.** Docs, RFCs, and the library's source code before tutorials.
-7. **Write down what I learned.** One sentence per sprint.
 
 ## Roadmap
 
