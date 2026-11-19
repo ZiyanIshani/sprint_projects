@@ -1,0 +1,7 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    role VARCHAR(20) DEFAULT 'member',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
