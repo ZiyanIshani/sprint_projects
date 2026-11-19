@@ -5,6 +5,7 @@ from email.utils import format_datetime
 import json
 import psycopg
 from user import User
+from concurrent.futures import ThreadPoolExecutor
 
 
 def parse_request(request):
@@ -49,25 +50,17 @@ def add_user(name, email) -> bool:
                 return False
 
 
-    
-
-
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.bind(("localhost", 4221))
-s.listen()
-
-while True:
-    conn, addr = s.accept()
-    info = b""
-    while b"\r\n\r\n" not in info:
-        chunk = conn.recv(4096)
-        if not chunk:
-            break
-        info += chunk
-
+def handle_client(conn, addr):
     now = datetime.now(timezone.utc)
     http_date = format_datetime(now, usegmt=True)
     try:
+        info = b""
+        while b"\r\n\r\n" not in info:
+            chunk = conn.recv(4096)
+            if not chunk:
+                break
+            info += chunk
+    
         req = info.decode()
         head_req, body_req = parse_request(req)
         length = 0
@@ -124,6 +117,21 @@ while True:
         encoded_resp = http_resp.encode()
         conn.sendall(encoded_resp)
         conn.close()
+    
+
+
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.bind(("localhost", 4221))
+s.listen()
+
+with ThreadPoolExecutor(max_workers=10) as executor: 
+    while True:
+        conn, addr = s.accept()
+        conn.settimeout(2.0)
+        executor.submit(handle_client, conn=conn, addr=addr)
+
+
+    
 
 
 
